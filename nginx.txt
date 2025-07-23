@@ -20,7 +20,7 @@
 #
 
 # Zone for general rate limiting (default: 30r/m)
-limit_req_zone $binary_remote_addr zone=one:10m rate=30r/m;
+# limit_req_zone $binary_remote_addr zone=one:10m rate=30r/m;
 
 # Zone for /threads and its sub-paths (new: 90r/m)
 limit_req_zone $binary_remote_addr zone=threads_zone:10m rate=90r/m;
@@ -62,13 +62,21 @@ server {
 
                 # limit_req zone=one;
 
-                # Apply the specific 90r/m limit for /threads
-                limit_req zone=threads_zone; # Menggunakan zona baru
-
-
                 # First attempt to serve request as file, then
                 # as directory, then fall back to displaying a 404.
                 # try_files $uri $uri/ =404;
+        }
+
+        location /threads {
+                proxy_pass http://localhost:5000; # Teruskan ke aplikasi kamu
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+
+                # Apply the specific 90r/m limit for /threads
+                limit_req zone=threads_zone;
         }
 
         # pass PHP scripts to FastCGI server
